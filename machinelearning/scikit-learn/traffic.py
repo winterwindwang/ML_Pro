@@ -28,7 +28,7 @@ X = X_encoder[:, :-1].astype(int)
 y = X_encoder[:, -1].astype(int)
 
 # 建立SVR
-params = {'kernel': 'rbf', 'C': 10.0, 'epsilon': 0.2}  # epsilon指定了不适用惩罚的限制
+params = {'kernel': 'rbf', 'C': 10.0, 'epsilon': 0.2,'gamma':'auto'}  # epsilon指定了不适用惩罚的限制
 regressor = SVR(**params)
 regressor.fit(X, y)
 
@@ -46,8 +46,10 @@ for i, item in enumerate(input_data):
     if item.isdigit():
         input_data_encoded[i] = input_data[i]
     else:
-        input_data_encoded[i] = int(label_encoder[count].transform(input_data[i]))
+        labels = []
+        labels.append(input_data[i])
+        input_data_encoded[i] = int(label_encoder[count].transform(labels))
         count = count + 1
 input_data_encoded = np.array(input_data_encoded)
 # 为特定数据点测试并打印分类结果
-print('Predict traffic: ', int(regressor.predict(input_data_encoded)[0]))
+print('Predict traffic: ', int(regressor.predict(input_data_encoded.reshape(1, -1))[0]))
