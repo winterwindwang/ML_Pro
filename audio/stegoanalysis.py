@@ -7,19 +7,32 @@ from sklearn.utils import shuffle
 from svm import *
 from svmutil import *
 
+maxSignalNum = 1000
 
-def fetech_mfcc(input_file,isStego=1):
-    files = os.listdir(input_file)
-    files = [input_file + '\\' + f for f in files if f.endswith('.wav')]
+def second_order_derivative(signal):
+    return np.array([signal[i+1] - 2*signal[i] - signal[i-1] for i in range(len(signal)-2) if i>=1])
+
+def get_feature(singal, sr, isStego=1):
     mfccs = []
     labels = []
-    for i in range(16000):
-        y, sr = librosa.load(files[i], sr=None, duration=1)    # origin smaplerate:16k channels:1  duration:3.968
-        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=24)  #  (24,32)
-        mfcc = np.mean(mfcc,axis=0).transpose()
-        mfccs.append(mfcc)          # feature shape (32,)
+    for i in range(maxSignalNum):
+        y = second_order_derivative(singal[i])
+        mfcc = librosa.feature.mfcc(y=y, sr=sr[i], n_mfcc=24)  # (24,32)
+        mfcc = np.mean(mfcc, axis=0).transpose()
+        mfccs.append(mfcc)  # feature shape (32,)
         labels.append(isStego)
     return np.array(mfccs), np.array(labels)
+
+def fetech_signal(input_file,isStego=1):
+    files = os.listdir(input_file)
+    files = [input_file + '\\' + f for f in files if f.endswith('.wav')]
+    signals = []
+    srs = []
+    for i in range(maxSignalNum):
+        y, sr = librosa.load(files[i], sr=None, duration=1)    # origin smaplerate:16k channels:1  duration:3.968
+        signals.append(y)
+        srs.append(sr)
+    return np.array(signals), np.array(srs)
 
 input_file_stego = r'D:\student\隐写分析\数据\1second_stego_data'
 input_file_cover = r'D:\student\隐写分析\数据\1second_cover_data'
@@ -27,8 +40,11 @@ input_file_cover = r'D:\student\隐写分析\数据\1second_cover_data'
 # y, sr = librosa.load(r'D:\student\隐写分析\数据\stego_data_lsb\1200_stego.wav', sr=None,duration=2)    # origin smaplerate:16k channels:1  duration:3.968
 # mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=24, hop_length=512)  #  (24,2591)
 # print(np.shape(np.array(mfcc).reshape(1,-1)))
-stego_mfccs,stego_labels = fetech_mfcc(input_file_stego)   # (num_sample,32)
-cover_mfccs, cover_labels = fetech_mfcc(input_file_cover,-1)
+stego_signals, stego_srs = fetech_signal(input_file_stego)
+cover_singals , cover_srs = fetech_signal(input_file_cover,)
+
+stego_mfccs,stego_labels = get_feature(stego_signals, stego_srs)  # (num_sample,32)
+cover_mfccs, cover_labels = get_feature(cover_singals, cover_srs,-1)
 
 # 训练数据集  (对训练和测试数据集进行合并)
 X_data = np.row_stack((stego_mfccs,cover_mfccs))
