@@ -6,4 +6,4 @@ tensorflow=1.12.0
 tensorboard=1.12.0
 numpy = 1.15.4
 3.运行 python CNN_network.py
-4.打开tensorboard可视化网页  tensorboard --logdir=logs --host=127.0.0.1s
+4.打开tensorboard可视化网页  tensorboard --logdir=logs --host=127.0.0.1
