@@ -8,7 +8,7 @@ from svm import *
 from svmutil import *
 import datetime
 
-maxSignalNum = 1600
+maxSignalNum = 16000
 
 def second_order_derivative(signal):
     return np.array([signal[i+1] - 2*signal[i] + signal[i-1] for i in range(len(signal)-2) if i>=1])
