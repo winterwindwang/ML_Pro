@@ -6,11 +6,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from svm import *
 from svmutil import *
+import datetime
 
-maxSignalNum = 1000
+maxSignalNum = 16000
 
 def second_order_derivative(signal):
-    return np.array([signal[i+1] - 2*signal[i] - signal[i-1] for i in range(len(signal)-2) if i>=1])
+    return np.array([signal[i+1] - 2*signal[i] + signal[i-1] for i in range(len(signal)-2) if i>=1])
 
 def get_feature(singal, sr, isStego=1):
     mfccs = []
@@ -40,27 +41,47 @@ input_file_cover = r'D:\student\隐写分析\数据\1second_cover_data'
 # y, sr = librosa.load(r'D:\student\隐写分析\数据\stego_data_lsb\1200_stego.wav', sr=None,duration=2)    # origin smaplerate:16k channels:1  duration:3.968
 # mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=24, hop_length=512)  #  (24,2591)
 # print(np.shape(np.array(mfcc).reshape(1,-1)))
-stego_signals, stego_srs = fetech_signal(input_file_stego)
-cover_singals , cover_srs = fetech_signal(input_file_cover,)
 
-stego_mfccs,stego_labels = get_feature(stego_signals, stego_srs)  # (num_sample,32)
+starttime = datetime.datetime.now()
+print('-----------开始时间----------------', starttime)
+
+stego_signals, stego_srs = fetech_signal(input_file_stego)
+cover_singals , cover_srs = fetech_signal(input_file_cover)
+
+stego_mfccs,stego_labels = get_feature(stego_signals, stego_srs, 1)  # (num_sample,32)
 cover_mfccs, cover_labels = get_feature(cover_singals, cover_srs,-1)
 
 # 训练数据集  (对训练和测试数据集进行合并)
 X_data = np.row_stack((stego_mfccs,cover_mfccs))
 y_data = np.append(stego_labels,cover_labels)
 
-X_data, y_data = shuffle(X_data, y_data,random_state=7)
-# 分离训练和测试集
-X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.3, random_state=5)
-X_train = list([list(row) for row in X_train])
-X_test = list([list(row) for row in X_test])
-y_train = list(y_train)
-y_test = list(y_test)
+with open(r'D:\student\隐写分析\数据\1s_2order_x.txt', 'w') as f:
+    f.write(str(X_data))
 
-problem = svm_problem(y_train, X_train)
-param = svm_parameter('-t 1 -c 4 -b 1')
-model = svm_train(problem,param)
-
-p_label, p_accuracy, p_validate = svm_predict(y_test, X_test, model)
-print(p_label)
+with open(r'D:\student\隐写分析\数据\1s_2order_y.txt', 'w') as f:
+    f.write(str(y_data))
+# X_data, y_data = shuffle(X_data, y_data,random_state=7)
+# # 分离训练和测试集
+# X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.3, random_state=5)
+# X_train = list([list(row) for row in X_train])
+# X_test = list([list(row) for row in X_test])
+# y_train = list(y_train)
+# y_test = list(y_test)
+# endtime = datetime.datetime.now()
+# print('-----------结束时间----------------', endtime)
+# print('-----------运行时间----------------', (endtime-starttime))
+#
+#
+# train_starttime = datetime.datetime.now()
+# print('-----------训练开始时间----------------', train_starttime)
+#
+# problem = svm_problem(y_train, X_train)
+# param = svm_parameter('-t 2 -c 0.7 -b 1 -h 0 -v 5')
+# model = svm_train(problem,param)
+#
+# p_label, p_accuracy, p_validate = svm_predict(y_test, X_test, model)
+# print(p_label)
+#
+# train_endtime = datetime.datetime.now()
+# print('-----------训练结束时间----------------', endtime)
+# print('-----------训练时间----------------', (train_endtime - train_starttime))
